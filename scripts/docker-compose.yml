@@ -1,0 +1,47 @@
+version: "2"
+
+services:
+  rabbit_mq:
+    container_name: rabbit_mq
+    image: "rabbitmq:3.7.3-management"
+    hostname: "rabbit_mq"
+    environment:
+      - RABBITMQ_ERLANG_COOKIE=SWQOKODSQALRPCLNMEQG
+      - RABBITMQ_DEFAULT_USER=rabbitmq_username
+      - RABBITMQ_DEFAULT_PASS=rabbitmq_password
+      - RABBITMQ_DEFAULT_VHOST=/
+    ports:
+      - "4369:4369"
+      - "5671:5671"
+      - "5672:5672"
+      - "15672:15672"
+
+  django:
+    container_name: django_server
+    build:
+      context: ../
+      dockerfile: ./Dockerfile
+    stdin_open: true
+    tty: true
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../src:/usr/src/app
+
+  celery_worker:
+    container_name: celery_worker
+    build:
+      context: ../
+      dockerfile: ./celery.Dockerfile
+    stdin_open: true
+    tty: true
+    volumes:
+      - ../src:/usr/src/app
+    depends_on:
+      - rabbit_mq
+
+  mongo_result_backend:
+    container_name: mongo_result_backend
+    image: "mongo"
+    ports:
+      - "27017:27017"
